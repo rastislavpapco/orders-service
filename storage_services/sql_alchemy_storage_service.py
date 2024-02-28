@@ -1,18 +1,19 @@
 from sqlalchemy import func, create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import Table, Column
-from typing import List
+from typing import Dict, List
 
 from database.database import Base, User, OrderProduct, Order
-from .storage_service import StorageService
+from model_factories.database_model_factory import DatabaseModelFactory
+from .abstract_storage_service import AbstractStorageService
 
 
-class SqlAlchemyStorageService(StorageService):
+class SqlAlchemyStorageService(AbstractStorageService):
     """
     Class for storing and querying the data in database through SqlAlchemy.
     """
 
-    def __init__(self, engine_connection_string: str = 'sqlite:///database/my_database.db'):
+    def __init__(self, engine_connection_string: str = 'sqlite:///database/database.db'):
         # Connect to database and create tables
         self.engine = create_engine(engine_connection_string)
         Base.metadata.create_all(self.engine)
@@ -22,7 +23,47 @@ class SqlAlchemyStorageService(StorageService):
         # Access the database tables
         self.tables = Base.metadata.tables
 
-    # TODO
+    @staticmethod
+    def _create_model_objects(data: List[dict]) -> Dict[str, List[Base]]:
+        """
+        Creates lists of objects for each database model from data.
+
+        Args:
+            data: Data to create objects from.
+
+        Returns:
+            Dictionary mapping model names to list of created objects.
+        """
+        users = []
+        products = []
+        orders = []
+        order_products = []
+
+        for order_dict in data:
+            try:
+                user = DatabaseModelFactory.create_model_instance("User", order_dict["user"])
+                order = DatabaseModelFactory.create_model_instance("Order",
+                                                                   {"id": order_dict["id"],
+                                                                             "created": order_dict["created"],
+                                                                             "user_id": order_dict["user"]["id"]})
+                for product_data in order_dict["products"]:
+                    order_product = DatabaseModelFactory.create_model_instance("OrderProduct",
+                                                                               {"order_id": order_dict["id"],
+                                                                                         "product_id": product_data["id"]})
+                    # Create product only if it is new
+                    if all(prod.id != product_data["id"] for prod in products):
+                        product = DatabaseModelFactory.create_model_instance("Product", product_data)
+                        products.append(product)
+                    order_products.append(order_product)
+                orders.append(order)
+                # Create user only if he is new
+                if all(stored_user.id != user.id for stored_user in users):
+                    users.append(user)
+            except KeyError as e:
+                print(f"Cannot create database model instances for order {order_dict}: missing key {e}.")
+
+        return {"users": users, "products": products, "orders": orders, "order_products": order_products}
+
     def store_data(self, data: List[dict]):
         """
         Stores provided data into the database.
@@ -30,7 +71,14 @@ class SqlAlchemyStorageService(StorageService):
         Args:
             data: Data to store.
         """
-        raise NotImplementedError("Storing data is not implemented yet.")
+        database_models_objects = self._create_model_objects(data)
+
+        with self.Session() as session:
+            for objects in database_models_objects.values():
+                session.add_all(objects)
+            session.commit()
+
+        print("Data successfully stored to database.")
 
     def _get_table(self, table_name: str) -> Table:
         table = self.tables.get(table_name)

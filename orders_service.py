@@ -1,7 +1,7 @@
 from typing import List
 
-from file_parsers.file_parser import FileParser
-from storage_services.storage_service import StorageService
+from file_parsers.abstract_file_parser import AbstractFileParser
+from storage_services.abstract_storage_service import AbstractStorageService
 
 
 class OrdersService:
@@ -9,7 +9,7 @@ class OrdersService:
     This class holds the application logic, which the user should interact with.
     """
 
-    def __init__(self, file_parser: FileParser, storage_service: StorageService):
+    def __init__(self, file_parser: AbstractFileParser, storage_service: AbstractStorageService):
         self.file_parser = file_parser
         self.storage_service = storage_service
 
@@ -21,8 +21,7 @@ class OrdersService:
             file_path (str): The path to the data file.
         """
         orders = self.file_parser.parse_data(file_path)
-        # TODO
-        # self.storage_service.store_data(orders)
+        self.storage_service.store_data(orders)
         return orders
 
     def get_orders_in_time_period(self, time_start: float, time_end: float) -> List[dict]:

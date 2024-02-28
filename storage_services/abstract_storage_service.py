@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 
-class StorageService(ABC):
+class AbstractStorageService(ABC):
     """
     Class for storing and querying the data.
     """

@@ -1,10 +1,10 @@
 import json
 from typing import List
 
-from .file_parser import FileParser
+from .abstract_file_parser import AbstractFileParser
 
 
-class NDJsonFileParser(FileParser):
+class NDJsonFileParser(AbstractFileParser):
     def parse_data(self, file_path: str) -> List[dict]:
         """
         Parses data from an NDJson file into a list of dictionaries.

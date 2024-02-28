@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 
-class FileParser(ABC):
+class AbstractFileParser(ABC):
     @abstractmethod
     def parse_data(self, file_path: str) -> List[dict]:
         """

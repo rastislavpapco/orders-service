@@ -29,7 +29,7 @@ def main():
 
 if __name__ == "__main__":
     file_parser = NDJsonFileParser()
-    storage_service = SqlAlchemyStorageService('sqlite:///database/my_database.db')
+    storage_service = SqlAlchemyStorageService('sqlite:///database/database.db')
     orders_service = OrdersService(file_parser, storage_service)
 
     main()
