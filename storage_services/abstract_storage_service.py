@@ -1,11 +1,15 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from model_factories.abstract_model_factory import AbstractModelFactory
+
 
 class AbstractStorageService(ABC):
     """
     Class for storing and querying the data.
     """
+    def __init__(self, model_factory: AbstractModelFactory):
+        self.model_factory = model_factory
 
     @abstractmethod
     def store_data(self, data: List[dict]):

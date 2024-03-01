@@ -13,7 +13,10 @@ class SqlAlchemyStorageService(AbstractStorageService):
     Class for storing and querying the data in database through SqlAlchemy.
     """
 
-    def __init__(self, engine_connection_string: str = 'sqlite:///database/database.db'):
+    def __init__(self,
+                 model_factory: DatabaseModelFactory,
+                 engine_connection_string: str = 'sqlite:///database/database.db'):
+        super().__init__(model_factory)
         # Connect to database and create tables
         self.engine = create_engine(engine_connection_string)
         Base.metadata.create_all(self.engine)
@@ -23,8 +26,7 @@ class SqlAlchemyStorageService(AbstractStorageService):
         # Access the database tables
         self.tables = Base.metadata.tables
 
-    @staticmethod
-    def _create_model_objects(data: List[dict]) -> Dict[str, List[Base]]:
+    def _create_model_objects(self, data: List[dict]) -> Dict[str, List[Base]]:
         """
         Creates lists of objects for each database model from data.
 
@@ -41,18 +43,18 @@ class SqlAlchemyStorageService(AbstractStorageService):
 
         for order_dict in data:
             try:
-                user = DatabaseModelFactory.create_model_instance("User", order_dict["user"])
-                order = DatabaseModelFactory.create_model_instance("Order",
-                                                                   {"id": order_dict["id"],
-                                                                             "created": order_dict["created"],
-                                                                             "user_id": order_dict["user"]["id"]})
+                user = self.model_factory.create_model_instance("User", order_dict["user"])
+                order = self.model_factory.create_model_instance("Order",
+                                                                 {"id": order_dict["id"],
+                                                                  "created": order_dict["created"],
+                                                                  "user_id": order_dict["user"]["id"]})
                 for product_data in order_dict["products"]:
-                    order_product = DatabaseModelFactory.create_model_instance("OrderProduct",
-                                                                               {"order_id": order_dict["id"],
-                                                                                         "product_id": product_data["id"]})
+                    order_product = self.model_factory.create_model_instance("OrderProduct",
+                                                                             {"order_id": order_dict["id"],
+                                                                              "product_id": product_data["id"]})
                     # Create product only if it is new
                     if all(prod.id != product_data["id"] for prod in products):
-                        product = DatabaseModelFactory.create_model_instance("Product", product_data)
+                        product = self.model_factory.create_model_instance("Product", product_data)
                         products.append(product)
                     order_products.append(order_product)
                 orders.append(order)

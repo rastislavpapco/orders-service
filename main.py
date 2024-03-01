@@ -1,5 +1,7 @@
 from orders_service import OrdersService
 from file_parsers.ndjson_file_parser import NDJsonFileParser
+from model_factories.database_model_factory import DatabaseModelFactory
+from storage_services.abstract_storage_service import AbstractStorageService
 from storage_services.sql_alchemy_storage_service import SqlAlchemyStorageService
 
 
@@ -14,7 +16,7 @@ def main():
     start_timestamp = 99
     end_timestamp = 201
     print(f"Get orders with timestamp between {start_timestamp} and {end_timestamp}")
-    results = orders_service.get_orders_in_time_period(99, 201)
+    results = orders_service.get_orders_in_time_period(start_timestamp, end_timestamp)
     for order in results:
         print(order)
     print()
@@ -29,7 +31,8 @@ def main():
 
 if __name__ == "__main__":
     file_parser = NDJsonFileParser()
-    storage_service = SqlAlchemyStorageService('sqlite:///database/database.db')
+    factory = DatabaseModelFactory()
+    storage_service = SqlAlchemyStorageService(factory, 'sqlite:///database/database.db')
     orders_service = OrdersService(file_parser, storage_service)
 
     main()
